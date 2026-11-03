@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node start.js --no-client",
     "start:dev": "node start.js",
-    "build": "npm --prefix coordinator install && npm --prefix storage-nodes install && npm --prefix client install && npm --prefix client run build",
+    "build": "npm --prefix coordinator install --production && npm --prefix storage-nodes install --production && npm --prefix client install --include=dev && npm --prefix client run build",
     "client": "npm --prefix client run dev",
     "coordinator": "npm --prefix coordinator run dev",
     "test": "npm --prefix coordinator test",
