@@ -1,0 +1,270 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* ─── Neutral Surfaces & Borders ─────────────────────────── */
+    --bg: #0B0D10;
+    --surface: #11141A;
+    --surface-2: #161A21;
+    --border: #1F2530;
+    --border-strong: #2A3140;
+
+    /* ─── Typography Colors ─────────────────────────────────── */
+    --text: #E6E8EC;
+    --text-muted: #98A1B0;
+    --text-dim: #667085;
+
+    /* ─── Accent & Brand (Primary buttons, active nav, links) ─ */
+    --accent: #5B8DEF;
+
+    /* ─── Status Accents (Used ONLY for status indicators) ──── */
+    --success: #3DD68C;
+    --warning: #F5B544;
+    --danger: #F2605C;
+
+    /* Compatibility aliases */
+    --border-light: var(--border-strong);
+    --green: var(--success);
+    --amber: var(--warning);
+    --red: var(--danger);
+
+    /* ─── Radii & Elevation ─────────────────────────────────── */
+    --radius-card: 8px;
+    --radius-modal: 8px;
+    --radius-button: 6px;
+    --radius-input: 6px;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  code, pre, .mono, [data-mono] {
+    font-family: 'JetBrains Mono', monospace;
+    font-feature-settings: 'calt' 1;
+    font-size: 13px;
+  }
+
+  .tabular, [data-tabular] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ─── Accessible Focus Rings (2px accent, contrast AA) ─────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ─── Quiet Scrollbars ──────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* ─── Page Entrance (200ms fade-in, calm) ───────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 200ms ease-out forwards;
+}
+
+/* ─── Common Utility Elements (Cards, Tables, Inputs) ───────── */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  color: var(--text);
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.btn:hover:not(:disabled) {
+  background-color: var(--border);
+  border-color: var(--border-strong);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #FFFFFF;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #4A7CDA;
+  border-color: #4A7CDA;
+}
+
+.btn-danger {
+  background-color: transparent;
+  border-color: rgba(242, 96, 92, 0.4);
+  color: var(--danger);
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: rgba(242, 96, 92, 0.1);
+  border-color: var(--danger);
+}
+
+/* ─── Status Dots & Badges ──────────────────────────────────── */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.dot-green  { background-color: var(--success); }
+.dot-amber  { background-color: var(--warning); }
+.dot-red    { background-color: var(--danger); }
+.dot-gray   { background-color: var(--text-dim); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  line-height: 1.3;
+}
+.badge-green {
+  background-color: rgba(61, 214, 140, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(61, 214, 140, 0.25);
+}
+.badge-amber {
+  background-color: rgba(245, 181, 68, 0.12);
+  color: var(--warning);
+  border: 1px solid rgba(245, 181, 68, 0.25);
+}
+.badge-red {
+  background-color: rgba(242, 96, 92, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(242, 96, 92, 0.25);
+}
+.badge-gray {
+  background-color: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.badge-blue {
+  background-color: rgba(91, 141, 239, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(91, 141, 239, 0.25);
+}
+
+/* ─── Dense Table ───────────────────────────────────────────── */
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.tbl th {
+  text-align: left;
+  padding: 8px 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+.tbl td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.tbl tr:hover td {
+  background-color: var(--surface-2);
+}
+
+/* ─── Toast ─────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 50;
+  max-width: 420px;
+  padding: 10px 16px;
+  border-radius: var(--radius-button);
+  font-size: 13px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface-2);
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 150ms ease-out;
+}
+
+/* ─── Skeleton Loading (Subtle pulse, no neon/gradients) ────── */
+.skeleton {
+  background-color: var(--surface-2);
+  border-radius: 4px;
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ─── Linear Progress Bar ───────────────────────────────────── */
+.bar {
+  height: 4px;
+  background-color: var(--surface-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 300ms ease;
+}

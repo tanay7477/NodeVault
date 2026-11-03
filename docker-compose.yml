@@ -1,0 +1,102 @@
+version: '3.9'
+
+# NodeVault — Docker Compose for Production-like Deployment
+# Usage:  docker-compose up --build
+
+services:
+  # ─── MongoDB ───────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: nodevault-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: nodevault
+
+  # ─── Storage Nodes (3 independent instances) ───────────
+  node-1:
+    build:
+      context: ./storage-nodes
+      dockerfile: Dockerfile
+    container_name: nodevault-node-1
+    restart: unless-stopped
+    environment:
+      - INTERNAL_SECRET=${INTERNAL_SECRET}
+    command: node nodeService.js --id node-1 --port 5001
+    ports:
+      - '5001:5001'
+    volumes:
+      - node1_data:/app/data/node-1
+
+  node-2:
+    build:
+      context: ./storage-nodes
+      dockerfile: Dockerfile
+    container_name: nodevault-node-2
+    restart: unless-stopped
+    environment:
+      - INTERNAL_SECRET=${INTERNAL_SECRET}
+    command: node nodeService.js --id node-2 --port 5002
+    ports:
+      - '5002:5002'
+    volumes:
+      - node2_data:/app/data/node-2
+
+  node-3:
+    build:
+      context: ./storage-nodes
+      dockerfile: Dockerfile
+    container_name: nodevault-node-3
+    restart: unless-stopped
+    environment:
+      - INTERNAL_SECRET=${INTERNAL_SECRET}
+    command: node nodeService.js --id node-3 --port 5003
+    ports:
+      - '5003:5003'
+    volumes:
+      - node3_data:/app/data/node-3
+
+  # ─── Coordinator (Central API + Auth + Load Balancer) ──
+  coordinator:
+    build:
+      context: ./coordinator
+      dockerfile: Dockerfile
+    container_name: nodevault-coordinator
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - node-1
+      - node-2
+      - node-3
+    ports:
+      - '5000:5000'
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/nodevault
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_SECRET=${INTERNAL_SECRET}
+      - NODE_1_URL=http://node-1:5001
+      - NODE_2_URL=http://node-2:5002
+      - NODE_3_URL=http://node-3:5003
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:5173}
+
+  # ─── React Frontend ─────────────────────────────────────
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: nodevault-client
+    restart: unless-stopped
+    ports:
+      - '5173:80'
+    depends_on:
+      - coordinator
+
+volumes:
+  mongo_data:
+  node1_data:
+  node2_data:
+  node3_data:

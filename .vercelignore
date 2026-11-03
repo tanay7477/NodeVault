@@ -1,0 +1,27 @@
+# Secrets & Environment variables
+.env
+.env.*
+*.env
+*.env.local
+**/.env
+**/.env.*
+coordinator/.env
+storage-nodes/.env
+client/.env
+
+# Local data stores & uploaded physical blocks
+coordinator/data/
+coordinator/tmp/
+storage-nodes/data/
+
+# Dependencies & Build artifacts
+node_modules/
+coordinator/node_modules/
+storage-nodes/node_modules/
+client/node_modules/
+client/dist/
+
+# Logs
+*.log
+logs/
+

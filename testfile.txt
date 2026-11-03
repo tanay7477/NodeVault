@@ -1,0 +1,1 @@
+Hello from NodeVault! This is a distributed file storage test.

@@ -1,0 +1,24 @@
+{
+  "name": "nodevault",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NodeVault - Distributed File Storage and Management System",
+  "scripts": {
+    "start": "node start.js",
+    "start:backend": "node start.js --no-client",
+    "client": "npm --prefix client run dev",
+    "coordinator": "npm --prefix coordinator run dev",
+    "test": "npm --prefix coordinator test",
+    "bench": "node scripts/benchmark.js",
+    "install:all": "npm --prefix coordinator install && npm --prefix storage-nodes install && npm --prefix client install"
+  },
+  "keywords": [
+    "distributed-systems",
+    "cloud-computing",
+    "storage",
+    "load-balancer",
+    "fault-tolerance"
+  ],
+  "author": "NodeVault — Final Year Project",
+  "license": "ISC"
+}

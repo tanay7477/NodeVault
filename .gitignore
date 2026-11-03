@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+coordinator/node_modules/
+storage-nodes/node_modules/
+client/node_modules/
+
+# Environment variables — NEVER commit secrets
+.env
+.env.*
+*.env
+*.env.local
+**/.env
+**/.env.*
+coordinator/.env
+storage-nodes/.env
+client/.env
+
+# Build output
+client/dist/
+client/dist-ssr/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Temp / upload dirs
+coordinator/tmp/
+coordinator/data/
+
+# Storage node data (local disk files)
+storage-nodes/data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.sw?
+
+# Test coverage
+coverage/

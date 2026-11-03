@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-11-02T16:38:18.108Z",
+  "environment": {
+    "nodeVersion": "v22.20.0",
+    "platform": "win32",
+    "arch": "x64",
+    "osType": "Windows_NT",
+    "osRelease": "10.0.26200",
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12500H",
+    "cores": 16,
+    "memoryGb": 15.6
+  },
+  "metrics": {
+    "samples": 200,
+    "writeLatencyMs": {
+      "min": 12,
+      "avg": 16,
+      "p50": 15,
+      "p95": 21,
+      "p99": 25,
+      "max": 35
+    },
+    "dedupLatencyMs": 15,
+    "failoverReadLatencyMs": 16,
+    "failoverNode": "node-2"
+  }
+}

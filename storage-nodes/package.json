@@ -1,0 +1,17 @@
+{
+  "name": "nodevault-storage-node",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NodeVault independent storage node service",
+  "main": "nodeService.js",
+  "scripts": {
+    "node1": "node nodeService.js --id node-1 --port 5001",
+    "node2": "node nodeService.js --id node-2 --port 5002",
+    "node3": "node nodeService.js --id node-3 --port 5003"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^18.0.9",
+    "express": "^4.21.0"
+  }
+}
