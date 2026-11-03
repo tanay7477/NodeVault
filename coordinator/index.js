@@ -1,5 +1,6 @@
 require('dotenv').config();
 const http = require('node:http');
+const path = require('node:path');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -35,7 +36,23 @@ app.use((req, res, next) => {
 });
 
 app.use(morgan('combined'));
-app.use(cors({ origin: config.clientUrl }));
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow same-origin requests (no origin header = same origin or server-to-server)
+    if (!origin) return callback(null, true);
+    // Allow configured client URL and any .onrender.com domain
+    const allowed = [config.clientUrl];
+    if (allowed.includes(origin) || /\.onrender\.com$/.test(origin)) {
+      return callback(null, true);
+    }
+    // In development, allow localhost
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 const authLimiter = rateLimit({
@@ -138,6 +155,16 @@ app.get('/metrics', async (_req, res) => {
 app.use('/api', (req, res) => {
   res.status(404).json({ error: `Endpoint not found: ${req.method} ${req.originalUrl}` });
 });
+
+// Serve client static files in production (when client/dist exists)
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+  console.log('[Coordinator] Serving client static files from', clientDist);
+}
 
 // Global JSON error handler
 app.use((err, req, res, _next) => {

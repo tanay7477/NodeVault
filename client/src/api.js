@@ -207,7 +207,9 @@ export async function getShareInfo(token)            {
 // ─── WebSocket Factory with Exponential Backoff & Jitter ────
 export function createClusterSocket(onMessage, onStatusChange) {
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const defaultWsUrl = `${proto}//${window.location.hostname}:5000/ws`;
+  const defaultWsUrl = window.location.port === '5173'
+    ? `${proto}//${window.location.hostname}:5000/ws`
+    : `${proto}//${window.location.host}/ws`;
   const wsUrl = import.meta.env.VITE_WS_URL || defaultWsUrl;
 
   let ws = null;

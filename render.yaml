@@ -1,0 +1,28 @@
+# Render Blueprint — NodeVault Distributed File Storage
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: nodevault
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: INTERNAL_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        value: https://nodevault.onrender.com
+      - key: AI_API_KEY
+        sync: false   # set manually in Render dashboard
+      - key: AI_MODEL
+        value: gemini-2.0-flash
+      - key: AI_PROVIDER
+        value: gemini

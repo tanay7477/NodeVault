@@ -4,8 +4,9 @@
   "private": true,
   "description": "NodeVault - Distributed File Storage and Management System",
   "scripts": {
-    "start": "node start.js",
-    "start:backend": "node start.js --no-client",
+    "start": "node start.js --no-client",
+    "start:dev": "node start.js",
+    "build": "npm --prefix coordinator install && npm --prefix storage-nodes install && npm --prefix client install && npm --prefix client run build",
     "client": "npm --prefix client run dev",
     "coordinator": "npm --prefix coordinator run dev",
     "test": "npm --prefix coordinator test",
