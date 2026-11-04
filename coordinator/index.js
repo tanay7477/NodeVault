@@ -250,6 +250,8 @@ if (require.main === module) {
 
 async function start() {
   await connectDB(config.mongoUri);
+  const { seedDefaultUsers } = require('./services/seedUsers');
+  await seedDefaultUsers();
   startHealthChecks();
   const { startTieringServices } = require('./services/tieringService');
   startTieringServices();

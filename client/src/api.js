@@ -24,9 +24,13 @@ async function request(path, opts = {}) {
   try {
     const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
     if (res.status === 401) {
-      clearToken(); clearUser();
-      window.location.href = '/login';
-      return { data: null, error: 'Session expired' };
+      if (path !== '/auth/login' && path !== '/auth/register') {
+        clearToken(); clearUser();
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return { data: null, error: 'Session expired' };
+      }
     }
     if (opts.rawResponse) return { data: res, error: null };
     const data = await res.json();
