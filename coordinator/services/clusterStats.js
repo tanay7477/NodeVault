@@ -62,9 +62,9 @@ async function getClusterMetrics(userId = null) {
   // Node telemetry enriched with exact verified numbers
   const nodes = nodesHealth.map(n => {
     const disk = n.diskUsage || {};
-    const usedBytes = disk.usedBytes != null ? disk.usedBytes : (nodeDbBytes[n.id] || 0);
+    const usedBytes = (disk.usedBytes && disk.usedBytes > 0) ? disk.usedBytes : (nodeDbBytes[n.id] || 0);
     const totalBytes = disk.totalBytes || NODE_CAPACITY_BYTES;
-    const fileCount = n.fileCount != null && n.fileCount > 0 ? n.fileCount : (nodeDbFileCounts[n.id] || 0);
+    const fileCount = (n.fileCount && n.fileCount > 0) ? n.fileCount : (nodeDbFileCounts[n.id] || 0);
     const usedPercent = Math.min(100, Math.round((usedBytes / totalBytes) * 100));
 
     const nodeFiles = allFiles

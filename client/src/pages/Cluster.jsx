@@ -242,9 +242,12 @@ export default function Cluster() {
               {nodes.map(node => {
                 const isOnline = node.status === 'online';
                 const isBackup = node.role === 'backup' || node.id === 'node-backup';
-                const diskUsed = node.diskUsage?.usedBytes || 0;
+                const filesFallbackBytes = (node.files || []).reduce((acc, f) => acc + (f.sizeBytes || 0), 0);
+                const diskUsed = (node.diskUsage?.usedBytes && node.diskUsage.usedBytes > 0)
+                  ? node.diskUsage.usedBytes
+                  : filesFallbackBytes;
                 const diskTotal = node.diskUsage?.totalBytes || 524288000;
-                const diskPct = node.diskUsage?.usedPercent ?? Math.min(100, Math.round((diskUsed / diskTotal) * 100));
+                const diskPct = Math.min(100, Math.round((diskUsed / diskTotal) * 100));
                 const isSelected = selectedNode?.id === node.id;
 
                 return (
@@ -433,35 +436,48 @@ export default function Cluster() {
                   Storage Allocation
                 </span>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-3 rounded-[6px] bg-[#0B0D10] border border-[#1F2530]">
-                    <span className="text-[11px] text-[#667085] block">Used capacity</span>
-                    <span className="text-sm font-semibold font-mono text-[#E6E8EC] mt-0.5 block">
-                      {fmt(selectedNode.diskUsage?.usedBytes || 0)}
-                    </span>
-                  </div>
+                {(() => {
+                  const selectedFallbackBytes = (selectedNode.files || []).reduce((acc, f) => acc + (f.sizeBytes || 0), 0);
+                  const selectedUsed = (selectedNode.diskUsage?.usedBytes && selectedNode.diskUsage.usedBytes > 0)
+                    ? selectedNode.diskUsage.usedBytes
+                    : selectedFallbackBytes;
+                  const selectedTotal = selectedNode.diskUsage?.totalBytes || 524288000;
+                  const selectedPct = Math.min(100, Math.round((selectedUsed / selectedTotal) * 100));
 
-                  <div className="p-3 rounded-[6px] bg-[#0B0D10] border border-[#1F2530]">
-                    <span className="text-[11px] text-[#667085] block">Total allocation</span>
-                    <span className="text-sm font-semibold font-mono text-[#E6E8EC] mt-0.5 block">
-                      {fmt(selectedNode.diskUsage?.totalBytes || 524288000)}
-                    </span>
-                  </div>
-                </div>
+                  return (
+                    <>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="p-3 rounded-[6px] bg-[#0B0D10] border border-[#1F2530]">
+                          <span className="text-[11px] text-[#667085] block">Used capacity</span>
+                          <span className="text-sm font-semibold font-mono text-[#E6E8EC] mt-0.5 block">
+                            {fmt(selectedUsed)}
+                          </span>
+                        </div>
 
-                {/* Progress */}
-                <div className="p-3 rounded-[6px] bg-[#0B0D10] border border-[#1F2530] space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono text-[#98A1B0]">
-                    <span>Disk Utilization</span>
-                    <span>{selectedNode.diskUsage?.usedPercent || 0}%</span>
-                  </div>
-                  <div className="w-full bg-[#1F2530] h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-[#5B8DEF] h-full rounded-full transition-all duration-300"
-                      style={{ width: `${selectedNode.diskUsage?.usedPercent || 0}%` }}
-                    />
-                  </div>
-                </div>
+                        <div className="p-3 rounded-[6px] bg-[#0B0D10] border border-[#1F2530]">
+                          <span className="text-[11px] text-[#667085] block">Total allocation</span>
+                          <span className="text-sm font-semibold font-mono text-[#E6E8EC] mt-0.5 block">
+                            {fmt(selectedTotal)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Progress */}
+                      <div className="p-3 rounded-[6px] bg-[#0B0D10] border border-[#1F2530] space-y-1.5">
+                        <div className="flex justify-between text-xs font-mono text-[#98A1B0]">
+                          <span>Disk Utilization</span>
+                          <span>{selectedPct}%</span>
+                        </div>
+                        <div className="w-full bg-[#1F2530] h-1.5 rounded-full overflow-hidden">
+                          <div
+                            className="bg-[#5B8DEF] h-full rounded-full transition-all duration-300"
+                            style={{ width: `${selectedPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Physical Storage Directory */}
