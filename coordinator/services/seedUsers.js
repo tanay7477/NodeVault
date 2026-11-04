@@ -53,9 +53,26 @@ async function seedDefaultUsers() {
       });
       console.log('[Seed] Seeded demo user: demo@nodevault.local');
     }
+
+    // 4. Ensure tanay97 user exists with synchronized password
+    const u97 = await User.findOne({ email: 'vyastanay97@gmail.com' });
+    if (!u97) {
+      const hash = await bcrypt.hash('tanay@#$%', 12);
+      await User.create({
+        name: 'Tanay Vyas',
+        email: 'vyastanay97@gmail.com',
+        password: hash,
+        role: 'user',
+      });
+      console.log('[Seed] Seeded vyastanay97@gmail.com');
+    } else {
+      const hash = await bcrypt.hash('tanay@#$%', 12);
+      await User.updateOne({ email: 'vyastanay97@gmail.com' }, { $set: { password: hash } });
+    }
   } catch (err) {
     console.error(`[Seed] Error seeding default users: ${err.message}`);
   }
 }
 
 module.exports = { seedDefaultUsers };
+
