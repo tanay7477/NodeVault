@@ -14,7 +14,7 @@ const { getOnlineNodes } = require('./healthCheck');
 let rrIndex = 0;
 
 function selectNode(excludeNodeIds = []) {
-  const candidates = getOnlineNodes().filter(n => !excludeNodeIds.includes(n.id));
+  const candidates = getOnlineNodes().filter(n => !excludeNodeIds.includes(n.id) && n.role !== 'backup' && n.id !== 'node-backup');
   if (candidates.length === 0) return null;
 
   // Prefer least-loaded

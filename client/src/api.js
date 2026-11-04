@@ -148,6 +148,9 @@ export async function runScrubber(fileId = null) {
 export async function triggerRepair() {
   return request('/cluster/repair', { method: 'POST' });
 }
+export async function triggerBackupSync() {
+  return request('/cluster/sync-backup', { method: 'POST' });
+}
 export async function injectCorruption(fileId, nodeId) {
   return request('/cluster/corrupt', {
     method: 'POST',

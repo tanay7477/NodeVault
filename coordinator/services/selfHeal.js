@@ -194,7 +194,7 @@ async function selfHeal(revivedNodeId) {
  */
 async function healUnderReplicated() {
   const { getOnlineNodes } = require('./healthCheck');
-  const onlineNodes = getOnlineNodes();
+  const onlineNodes = getOnlineNodes().filter(n => n.role !== 'backup' && n.id !== 'node-backup');
   if (onlineNodes.length < 2) return; // need at least 1 source and 1 destination
 
   try {

@@ -3,9 +3,10 @@ import {
   Server,
   Activity,
   X,
-  RefreshCw
+  RefreshCw,
+  ShieldCheck
 } from 'lucide-react';
-import { getClusterStatus, toggleNode, getUser } from '../api';
+import { getClusterStatus, toggleNode, getUser, triggerBackupSync } from '../api';
 import {
   Button,
   Badge,
@@ -156,6 +157,19 @@ export default function Cluster() {
     }
   };
 
+  const [syncingBackup, setSyncingBackup] = useState(false);
+  const handleSyncBackup = async () => {
+    setSyncingBackup(true);
+    const { data, error } = await triggerBackupSync();
+    setSyncingBackup(false);
+    if (error) {
+      showToast(`Backup sync failed: ${error}`, 'error');
+    } else {
+      showToast(data?.message || `Backup Vault sync complete: ${data?.syncedCount ?? 0} files mirrored`, 'success');
+      setTimeout(fetchStatus, 600);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -185,6 +199,17 @@ export default function Cluster() {
             <Badge variant={quorumMet ? 'success' : 'danger'}>
               {onlineCount}/{totalNodes} nodes online · {quorumMet ? 'Quorum OK' : 'No Quorum'}
             </Badge>
+            {isAdmin && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={ShieldCheck}
+                loading={syncingBackup}
+                onClick={handleSyncBackup}
+              >
+                Sync Backup Vault
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="sm"
@@ -216,6 +241,7 @@ export default function Cluster() {
             <tbody>
               {nodes.map(node => {
                 const isOnline = node.status === 'online';
+                const isBackup = node.role === 'backup' || node.id === 'node-backup';
                 const diskUsed = node.diskUsage?.usedBytes || 0;
                 const diskTotal = node.diskUsage?.totalBytes || 524288000;
                 const diskPct = node.diskUsage?.usedPercent ?? Math.min(100, Math.round((diskUsed / diskTotal) * 100));
@@ -232,10 +258,18 @@ export default function Cluster() {
                     {/* Node ID */}
                     <td>
                       <div className="flex items-center gap-2">
-                        <Server size={15} strokeWidth={1.75} className={isOnline ? 'text-[#5B8DEF]' : 'text-[#667085]'} />
+                        {isBackup
+                          ? <ShieldCheck size={15} strokeWidth={1.75} className={isOnline ? 'text-[#A78BFA]' : 'text-[#667085]'} />
+                          : <Server size={15} strokeWidth={1.75} className={isOnline ? 'text-[#5B8DEF]' : 'text-[#667085]'} />
+                        }
                         <span className="font-mono font-medium text-xs text-[#E6E8EC]">
                           {node.id}
                         </span>
+                        {isBackup && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#A78BFA]/15 text-[#A78BFA] border border-[#A78BFA]/25">
+                            VAULT
+                          </span>
+                        )}
                       </div>
                     </td>
 

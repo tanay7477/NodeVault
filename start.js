@@ -28,6 +28,7 @@ const cluster = [
   { name: 'Node-1',      cwd: '.', cmd: 'node', args: ['storage-nodes/nodeService.js', '--id', 'node-1', '--port', '5001'], color: '\x1b[32m' },
   { name: 'Node-2',      cwd: '.', cmd: 'node', args: ['storage-nodes/nodeService.js', '--id', 'node-2', '--port', '5002'], color: '\x1b[33m' },
   { name: 'Node-3',      cwd: '.', cmd: 'node', args: ['storage-nodes/nodeService.js', '--id', 'node-3', '--port', '5003'], color: '\x1b[35m' },
+  { name: 'Node-Backup', cwd: '.', cmd: 'node', args: ['storage-nodes/nodeService.js', '--id', 'node-backup', '--port', '5004'], color: '\x1b[95m' },
 ];
 
 if (withClient) {

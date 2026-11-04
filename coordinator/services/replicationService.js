@@ -145,17 +145,28 @@ async function removeFromNode(nodeId, fileId) {
 }
 
 /**
- * Write a designated backup copy to the isolated offline backup vault.
+ * Write a designated backup copy to the dedicated backup node (node-backup:5004)
+ * and mirror to isolated offline backup directory.
  */
 async function saveBackupCopy(fileBuffer, fileId) {
+  let nodeCopied = false;
+  try {
+    nodeCopied = await copyToNode('node-backup', fileId, fileBuffer);
+    if (nodeCopied) {
+      console.log(`[BackupNode] 🛡️ Streamed backup copy of ${fileId} to node-backup:5004`);
+    }
+  } catch (err) {
+    console.warn(`[BackupNode] Network copy to node-backup failed: ${err.message}`);
+  }
+
   try {
     fs.mkdirSync(config.backupDir, { recursive: true });
     const backupPath = path.join(config.backupDir, fileId);
     fs.writeFileSync(backupPath, fileBuffer);
     return true;
   } catch (err) {
-    console.error(`[Backup] Failed to save backup copy for ${fileId}: ${err.message}`);
-    return false;
+    console.error(`[Backup] Failed to save local backup mirror for ${fileId}: ${err.message}`);
+    return nodeCopied;
   }
 }
 
@@ -172,9 +183,13 @@ function hasBackupCopy(fileId) {
 }
 
 /**
- * Remove backup copy from the isolated offline backup vault.
+ * Remove backup copy from node-backup and offline backup directory.
  */
 async function removeBackupCopy(fileId) {
+  try {
+    await removeFromNode('node-backup', fileId);
+  } catch (_) {}
+
   try {
     const backupPath = path.join(config.backupDir, fileId);
     if (fs.existsSync(backupPath)) {

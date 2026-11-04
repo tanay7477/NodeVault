@@ -8,6 +8,7 @@ const {
   repair,
   repairMetrics,
   injectCorruption,
+  syncBackup,
 } = require('../controllers/clusterController');
 
 const router = Router();
@@ -17,5 +18,6 @@ router.post('/scrub',                  auth, requireAdmin, scrub);
 router.post('/repair',                 auth, requireAdmin, repair);
 router.get('/repair-metrics',          auth, requireAdmin, repairMetrics);
 router.post('/corrupt',                auth, requireAdmin, injectCorruption);
+router.post('/sync-backup',            auth, requireAdmin, syncBackup);
 
 module.exports = router;

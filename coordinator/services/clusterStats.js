@@ -34,12 +34,14 @@ async function getClusterMetrics(userId = null) {
     nodeDbBytes[n.id] = 0;
   }
 
+  // Count only active (non-backup) distribution entries for replication metrics
   for (const f of allFiles) {
     const dist = f.distribution || [];
-    totalPhysicalReplicas += dist.length;
-    totalPhysicalBytes += (f.sizeBytes || 0) * dist.length;
+    const activeDist = dist.filter(d => d.nodeId !== 'node-backup' && d.role !== 'backup');
+    totalPhysicalReplicas += activeDist.length;
+    totalPhysicalBytes += (f.sizeBytes || 0) * activeDist.length;
 
-    if (dist.length < (config.replicationFactor || 3)) {
+    if (activeDist.length < (config.replicationFactor || 3)) {
       underReplicatedCount++;
     } else {
       healthyReplicatedCount++;
@@ -79,6 +81,7 @@ async function getClusterMetrics(userId = null) {
     return {
       id: n.id,
       url: n.url,
+      role: n.role || (n.id === 'node-backup' ? 'backup' : 'primary'),
       status: n.status,
       latencyMs: n.latencyMs,
       lastCheck: n.lastCheck,

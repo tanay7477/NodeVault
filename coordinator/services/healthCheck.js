@@ -22,6 +22,7 @@ for (const node of config.nodes) {
   nodeHealth.set(node.id, {
     id: node.id,
     url: node.url,
+    role: node.role || (node.id === 'node-backup' ? 'backup' : 'primary'),
     status: 'unknown',
     lastCheck: null,
     latencyMs: null,
@@ -50,6 +51,7 @@ async function checkNode(node) {
     const currentHealth = {
       id: node.id,
       url: node.url,
+      role: node.role || (node.id === 'node-backup' ? 'backup' : 'primary'),
       status: 'online',
       lastCheck: new Date().toISOString(),
       latencyMs: Date.now() - start,
@@ -69,8 +71,10 @@ async function checkNode(node) {
         health: currentHealth,
       });
 
-      // Self-heal: node revived, reconcile block reports
-      setImmediate(() => getSelfHeal().selfHeal(node.id).catch(console.error));
+      // Self-heal: primary worker node revived, reconcile block reports
+      if (node.role !== 'backup' && node.id !== 'node-backup') {
+        setImmediate(() => getSelfHeal().selfHeal(node.id).catch(console.error));
+      }
     }
   } catch (err) {
     const currentHealth = {

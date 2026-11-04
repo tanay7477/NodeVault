@@ -113,4 +113,60 @@ exports.injectCorruption = async (req, res) => {
   }
 };
 
+exports.syncBackup = async (req, res) => {
+  try {
+    const { FileMetadata } = require('../models');
+    const { getNodeHealth } = require('../services/healthCheck');
+    const { retrieveFile, copyToNode } = require('../services/replicationService');
+
+    const backupHealth = getNodeHealth('node-backup');
+    if (!backupHealth || backupHealth.status !== 'online') {
+      return res.status(503).json({ error: 'Node-Backup (port 5004) is offline or unreachable' });
+    }
+
+    const files = await FileMetadata.find({ deleted_at: null });
+    let syncedCount = 0;
+    let skippedCount = 0;
+
+    for (const f of files) {
+      try {
+        const checkRes = await fetch(`${backupHealth.url}/checksum/${f.fileId}`, {
+          headers: { 'x-internal-secret': config.internalSecret },
+        });
+        if (checkRes.ok) {
+          skippedCount++;
+          continue;
+        }
+
+        const { stream } = await retrieveFile(f.fileId);
+        if (stream) {
+          const chunks = [];
+          for await (const chunk of stream) chunks.push(chunk);
+          const buf = Buffer.concat(chunks);
+          const ok = await copyToNode('node-backup', f.fileId, buf);
+          if (ok) syncedCount++;
+        }
+      } catch (_) {}
+    }
+
+    await logEvent({
+      userId: req.user?.id || 'admin',
+      action: 'vault_sync',
+      resource: 'node-backup',
+      status: 'success',
+      meta: { syncedCount, skippedCount, totalFiles: files.length },
+    });
+
+    res.json({
+      success: true,
+      message: `Disaster Recovery sync complete: ${syncedCount} new files backed up to node-backup`,
+      syncedCount,
+      skippedCount,
+      totalFiles: files.length,
+    });
+  } catch (err) {
+    res.status(500).json({ error: `Sync backup failed: ${err.message}` });
+  }
+};
+
 
