@@ -256,6 +256,9 @@ async function start() {
   const { startTieringServices } = require('./services/tieringService');
   startTieringServices();
 
+  const { syncExistingFiles } = require('./services/aiService');
+  syncExistingFiles().catch(() => {});
+
   // Crash recovery: scan for uncommitted intents from aborted uploads & unreferenced disk blocks
   const { sweepOrphans, sweepUnreferencedBlocks } = require('./services/writeAheadLog');
   sweepOrphans().then(res => {

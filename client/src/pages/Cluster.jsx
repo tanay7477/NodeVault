@@ -243,9 +243,7 @@ export default function Cluster() {
                 const isOnline = node.status === 'online';
                 const isBackup = node.role === 'backup' || node.id === 'node-backup';
                 const filesFallbackBytes = (node.files || []).reduce((acc, f) => acc + (f.sizeBytes || 0), 0);
-                const diskUsed = (node.diskUsage?.usedBytes && node.diskUsage.usedBytes > 0)
-                  ? node.diskUsage.usedBytes
-                  : filesFallbackBytes;
+                const diskUsed = Math.max(node.diskUsage?.usedBytes || 0, filesFallbackBytes);
                 const diskTotal = node.diskUsage?.totalBytes || 524288000;
                 const diskPct = Math.min(100, Math.round((diskUsed / diskTotal) * 100));
                 const isSelected = selectedNode?.id === node.id;
@@ -438,9 +436,7 @@ export default function Cluster() {
 
                 {(() => {
                   const selectedFallbackBytes = (selectedNode.files || []).reduce((acc, f) => acc + (f.sizeBytes || 0), 0);
-                  const selectedUsed = (selectedNode.diskUsage?.usedBytes && selectedNode.diskUsage.usedBytes > 0)
-                    ? selectedNode.diskUsage.usedBytes
-                    : selectedFallbackBytes;
+                  const selectedUsed = Math.max(selectedNode.diskUsage?.usedBytes || 0, selectedFallbackBytes);
                   const selectedTotal = selectedNode.diskUsage?.totalBytes || 524288000;
                   const selectedPct = Math.min(100, Math.round((selectedUsed / selectedTotal) * 100));
 

@@ -157,10 +157,70 @@ function removeDoc(docId) {
 /**
  * List all indexed files for a given owner.
  */
-function listIndexed(owner) {
+function listIndexed(owner, isAdmin = false) {
   const store = loadStore();
   const ownerStr = String(owner);
-  return Object.values(store).filter(entry => String(entry.owner) === ownerStr);
+  const own = Object.values(store).filter(entry => String(entry.owner) === ownerStr);
+  if (own.length > 0) return own;
+  if (isAdmin) return Object.values(store);
+  return own;
+}
+
+/**
+ * Re-indexes all existing readable files from storage nodes or cluster.
+ */
+async function syncExistingFiles() {
+  try {
+    const { FileMetadata } = require('../models');
+    const store = loadStore();
+    const readableExts = ['.txt', '.md', '.csv', '.log', '.json', '.pdf'];
+    const allFiles = await FileMetadata.find({});
+    let count = 0;
+
+    for (const f of allFiles) {
+      if (store[String(f.fileId)]) continue;
+      const ext = path.extname(f.originalName || '').toLowerCase();
+      if (!readableExts.includes(ext)) continue;
+
+      let buf = null;
+      for (const nodeId of ['node-1', 'node-2', 'node-3', 'node-backup']) {
+        const localP = path.join(__dirname, '../../storage-nodes/data', nodeId, f.fileId);
+        if (fs.existsSync(localP)) {
+          try {
+            buf = fs.readFileSync(localP);
+            if (buf && buf.length > 0) break;
+          } catch (_) {}
+        }
+      }
+
+      if (!buf) {
+        try {
+          const { retrieveFile } = require('./replicationService');
+          const res = await retrieveFile(f.fileId, f.distribution);
+          if (res && res.stream) {
+            const chunks = [];
+            for await (const chunk of res.stream) chunks.push(chunk);
+            buf = Buffer.concat(chunks);
+          }
+        } catch (_) {}
+      }
+
+      if (buf && buf.length > 0) {
+        await indexFile({
+          docId: f.fileId,
+          fileId: f.fileId,
+          owner: f.owner,
+          fileName: f.originalName,
+          mimeType: f.mimeType,
+          buffer: buf,
+        });
+        count++;
+      }
+    }
+    return count;
+  } catch (err) {
+    return 0;
+  }
 }
 
 /**
@@ -317,7 +377,7 @@ function parseAnswer(rawText, validFileNames) {
 /**
  * Ask a question across the user's indexed files.
  */
-async function askQuestion(owner, question) {
+async function askQuestion(owner, question, isAdmin = false) {
   const apiKey = process.env.AI_API_KEY || '';
   const model = process.env.AI_MODEL || '';
   const provider = (process.env.AI_PROVIDER || config.ai.provider || 'gemini').toLowerCase().trim();
@@ -327,8 +387,12 @@ async function askQuestion(owner, question) {
     throw new AiError(503, 'AI service is not configured (missing AI_API_KEY or AI_MODEL)');
   }
 
-  // Load ONLY texts where owner === caller, newest first
-  const userFiles = listIndexed(owner);
+  // Load texts where owner === caller, newest first (auto-sync if empty)
+  let userFiles = listIndexed(owner, isAdmin);
+  if (userFiles.length === 0) {
+    await syncExistingFiles();
+    userFiles = listIndexed(owner, isAdmin);
+  }
   userFiles.sort((a, b) => new Date(b.indexedAt || 0) - new Date(a.indexedAt || 0));
 
   const maxCharsTotal = config.ai.maxCharsTotal || 100000;
@@ -448,6 +512,7 @@ module.exports = {
   indexInBackground,
   removeDoc,
   listIndexed,
+  syncExistingFiles,
   parseAnswer,
   askQuestion,
   generateSummaryAndTags,

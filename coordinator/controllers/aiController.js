@@ -15,7 +15,8 @@ exports.ask = async (req, res) => {
       return res.status(400).json({ error: 'Question must be between 3 and 500 characters' });
     }
 
-    const result = await aiService.askQuestion(req.user.id, trimmed);
+    const isAdmin = req.user?.role === 'admin';
+    const result = await aiService.askQuestion(req.user.id, trimmed, isAdmin);
 
     // Audit log: Never write the question text to the audit log!
     await logEvent({
@@ -46,12 +47,17 @@ exports.ask = async (req, res) => {
   }
 };
 
-exports.status = (req, res) => {
+exports.status = async (req, res) => {
   try {
     const apiKey = process.env.AI_API_KEY || '';
     const model = process.env.AI_MODEL || '';
     const configured = Boolean(apiKey && model);
-    const indexed = aiService.listIndexed(req.user.id);
+    const isAdmin = req.user?.role === 'admin';
+    let indexed = aiService.listIndexed(req.user.id, isAdmin);
+    if (indexed.length === 0) {
+      await aiService.syncExistingFiles();
+      indexed = aiService.listIndexed(req.user.id, isAdmin);
+    }
 
     return res.json({
       configured,

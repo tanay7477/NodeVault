@@ -549,9 +549,10 @@ export default function Dashboard() {
                   }
 
                   // Online node
-                  const diskUsed = node.diskUsage?.usedBytes || 0;
+                  const filesFallbackBytes = (node.files || []).reduce((acc, f) => acc + (f.sizeBytes || 0), 0);
+                  const diskUsed = Math.max(node.diskUsage?.usedBytes || 0, filesFallbackBytes);
                   const diskTotal = node.diskUsage?.totalBytes || 524288000;
-                  const diskPct = node.diskUsage?.usedPercent ?? Math.min(100, Math.round((diskUsed / diskTotal) * 100));
+                  const diskPct = Math.min(100, Math.round((diskUsed / diskTotal) * 100));
 
                   return (
                     <div
