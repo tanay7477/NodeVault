@@ -172,50 +172,80 @@ async function callLLM({ provider, apiKey, model, baseUrl, systemPrompt, userPro
   if (provider === 'gemini') {
     const defaultBase = 'https://generativelanguage.googleapis.com/v1beta';
     const base = baseUrl ? baseUrl.replace(/\/+$/, '') : defaultBase;
-    const url = `${base}/models/${model}:generateContent`;
+    
+    // Model fallback sequence: primary model first, followed by known stable alternatives
+    const fallbackModels = ['gemini-3-flash-preview', 'gemini-3.8-flash', 'gemini-3.1-flash-lite-preview'];
+    const modelsToTry = [model, ...fallbackModels].filter((m, idx, arr) => m && arr.indexOf(m) === idx);
 
-    let res;
-    try {
-      res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }],
+    let lastError = null;
+
+    for (const currentModel of modelsToTry) {
+      const url = `${base}/models/${currentModel}:generateContent`;
+
+      let res;
+      try {
+        res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
           },
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: userPrompt }],
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemPrompt }],
             },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: 'application/json',
-          },
-        }),
-        signal,
-      });
-    } catch (err) {
-      if (err.name === 'TimeoutError' || err.code === 'ETIMEDOUT' || err.name === 'AbortError') {
-        throw new AiError(504, 'AI provider request timed out');
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: userPrompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: 'application/json',
+            },
+          }),
+          signal,
+        });
+      } catch (err) {
+        if (err.name === 'TimeoutError' || err.code === 'ETIMEDOUT' || err.name === 'AbortError') {
+          throw new AiError(504, 'AI provider request timed out');
+        }
+        throw new AiError(502, `Failed to connect to Gemini: ${err.message}`);
       }
-      throw new AiError(502, `Failed to connect to Gemini: ${err.message}`);
+
+      if (!res) {
+        if (lastError) throw lastError;
+        break;
+      }
+
+      if (res.status === 429) {
+        lastError = new AiError(429, 'Rate limit exceeded by AI provider');
+        if (process.env.NODE_ENV === 'test' || currentModel === modelsToTry[modelsToTry.length - 1]) {
+          throw lastError;
+        }
+        console.warn(`[AI] Model ${currentModel} rate limited (429), trying fallback model...`);
+        continue;
+      }
+      if (res.status === 503 || res.status === 404) {
+        const errBody = await res.text().catch(() => '');
+        lastError = new AiError(res.status === 404 ? 404 : 503, `Gemini API error (${res.status}): ${errBody || res.statusText}`);
+        if (process.env.NODE_ENV === 'test' || currentModel === modelsToTry[modelsToTry.length - 1]) {
+          throw lastError;
+        }
+        console.warn(`[AI] Model ${currentModel} returned ${res.status}, trying fallback model...`);
+        continue;
+      }
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        throw new AiError(502, `Gemini API error (${res.status}): ${errBody || res.statusText}`);
+      }
+
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
 
-    if (res.status === 429) {
-      throw new AiError(429, 'Rate limit exceeded by AI provider');
-    }
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
-      throw new AiError(502, `Gemini API error (${res.status}): ${errBody || res.statusText}`);
-    }
-
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (lastError) throw lastError;
   }
 
   // OpenAI-compatible provider

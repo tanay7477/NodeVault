@@ -23,6 +23,7 @@ services:
       - key: AI_API_KEY
         sync: false   # set manually in Render dashboard
       - key: AI_MODEL
-        value: gemini-2.0-flash
+        value: gemini-3-flash-preview
       - key: AI_PROVIDER
         value: gemini
+
