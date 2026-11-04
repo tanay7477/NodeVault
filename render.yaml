@@ -26,4 +26,6 @@ services:
         value: gemini-3-flash-preview
       - key: AI_PROVIDER
         value: gemini
+      - key: ENABLE_CHAOS
+        value: "true"
 

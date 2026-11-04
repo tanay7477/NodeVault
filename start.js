@@ -19,6 +19,11 @@ try {
   }
 } catch (_) {}
 
+// Ensure ENABLE_CHAOS defaults to 'true' so Chaos Lab and Resilience tests work seamlessly
+if (!process.env.ENABLE_CHAOS) {
+  process.env.ENABLE_CHAOS = 'true';
+}
+
 const RESET = '\x1b[0m';
 
 const withClient = !process.argv.includes('--no-client');

@@ -125,7 +125,10 @@ export default function ChaosLab() {
       const t2 = performance.now();
       const killTarget = targetNode === 'auto' ? 'node-1' : targetNode;
       addChaosLog(`Step 2: Triggering simulated failure on ${killTarget}...`, 'warn');
-      await toggleNode(killTarget, 'kill');
+      const { error: toggleErr } = await toggleNode(killTarget, 'kill');
+      if (toggleErr) {
+        throw new Error(`Failed to kill ${killTarget}: ${toggleErr}`);
+      }
 
       let wentOffline = false;
       let offlineElapsed = 0;
