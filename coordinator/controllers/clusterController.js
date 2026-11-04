@@ -138,15 +138,19 @@ exports.syncBackup = async (req, res) => {
           continue;
         }
 
-        const { stream } = await retrieveFile(f.fileId);
-        if (stream) {
+        const fileResult = await retrieveFile(f.fileId, f.distribution);
+        if (fileResult && fileResult.stream) {
           const chunks = [];
-          for await (const chunk of stream) chunks.push(chunk);
+          for await (const chunk of fileResult.stream) chunks.push(chunk);
           const buf = Buffer.concat(chunks);
           const ok = await copyToNode('node-backup', f.fileId, buf);
-          if (ok) syncedCount++;
+          if (ok) {
+            syncedCount++;
+          }
         }
-      } catch (_) {}
+      } catch (err) {
+        console.warn(`[SyncBackup] Error syncing ${f.fileId}: ${err.message}`);
+      }
     }
 
     await logEvent({
